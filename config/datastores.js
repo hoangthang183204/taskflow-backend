@@ -17,6 +17,7 @@ module.exports.datastores = {
   default: {
     adapter: "sails-mongo",
     url: process.env.DATABASE_URL,
+    database: "task_manager",
   },
 };
 // Sails.js kết nối đến MongoDB ở database có tên là task_manager
