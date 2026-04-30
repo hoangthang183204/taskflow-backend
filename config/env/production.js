@@ -5,18 +5,18 @@ module.exports = {
   },
 
   // Cấu hình bộ nhớ phiên (Session Store) bắt buộc dùng Redis trong production
-  session: {
-    // Dùng adapter cho Redis
-    adapter: '@sailshq/connect-redis',
-    // URL kết nối Redis sẽ được lấy từ biến môi trường do Railway cung cấp
-    url: process.env.REDIS_URL,
-    // Bật cookie bảo mật (chỉ hoạt động qua HTTPS)
-    cookie: {
-      secure: true,
-      // Đặt maxAge ví dụ: 7 ngày (7 * 24 * 60 * 60 * 1000)
-      // maxAge: 604800000,
-    },
-  },
+  // session: {
+  //   // Dùng adapter cho Redis
+  //   adapter: '@sailshq/connect-redis',
+  //   // URL kết nối Redis sẽ được lấy từ biến môi trường do Railway cung cấp
+  //   url: process.env.REDIS_URL,
+  //   // Bật cookie bảo mật (chỉ hoạt động qua HTTPS)
+  //   cookie: {
+  //     secure: true,
+  //     // Đặt maxAge ví dụ: 7 ngày (7 * 24 * 60 * 60 * 1000)
+  //     // maxAge: 604800000,
+  //   },
+  // },
 
   // Cấu hình an toàn cho WebSocket (Sails Socket)
   sockets: {
