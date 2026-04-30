@@ -1,43 +1,44 @@
 module.exports = {
-  // Cấu hình port
-  port: process.env.PORT || 1337,
-  
-  // CẤU HÌNH DATABASE - QUAN TRỌNG NHẤT
-  datastores: {
-    default: {
-      url: process.env.DATABASE_URL,  // Lấy từ biến môi trường trên Railway
-    }
+  // Bật chế độ trust proxy vì app chạy sau proxy (Railway)
+  http: {
+    trustProxy: true,
   },
-  
-  // Cấu hình models (tắt auto-migrate trong production)
-  models: {
-    migrate: 'safe',  // Không tự động thay đổi database schema
+
+  // Cấu hình bộ nhớ phiên (Session Store) bắt buộc dùng Redis trong production
+  session: {
+    // Dùng adapter cho Redis
+    adapter: '@sailshq/connect-redis',
+    // URL kết nối Redis sẽ được lấy từ biến môi trường do Railway cung cấp
+    url: process.env.REDIS_URL,
+    // Bật cookie bảo mật (chỉ hoạt động qua HTTPS)
+    cookie: {
+      secure: true,
+      // Đặt maxAge ví dụ: 7 ngày (7 * 24 * 60 * 60 * 1000)
+      // maxAge: 604800000,
+    },
   },
-  
-  // Cấu hình sockets
+
+  // Cấu hình an toàn cho WebSocket (Sails Socket)
   sockets: {
+    // Chỉ cho phép kết nối từ địa chỉ Frontend của bạn
     onlyAllowOrigins: [
       process.env.FRONTEND_URL || 'https://taskflow-frontend.vercel.app',
-      'http://localhost:3000'
-    ]
+    ],
   },
-  
-  // Cấu hình session
-  session: {
-    cookie: {
-      secure: false  // Vì đang dùng HTTP, chưa có HTTPS
-    }
-  },
-  
-  // Cấu hình CORS
+
+  // Cấu hình an toàn cho CORS (Chia sẻ tài nguyên giữa các nguồn gốc)
   security: {
     cors: {
       allRoutes: true,
       allowOrigins: [
         process.env.FRONTEND_URL || 'https://taskflow-frontend.vercel.app',
-        'http://localhost:3000'
       ],
-      allowCredentials: true
-    }
-  }
+      allowCredentials: true,
+    },
+  },
+
+  // Đảm bảo models ở chế độ an toàn, không tự động migrate database
+  models: {
+    migrate: 'safe',
+  },
 };
