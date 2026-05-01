@@ -16,7 +16,7 @@
 
 module.exports.datastores = {
   default: {
-    adapter: "sails-postgresql",
+    adapter: require('sails-postgresql'),
     url: process.env.DATABASE_URL,
   },
 };
