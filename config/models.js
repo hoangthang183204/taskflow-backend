@@ -8,7 +8,7 @@ module.exports.models = {
   //   id: { type: 'string', columnName: '_id' },
   // },
 
-  migrate: "safe",
+  migrate: "alter",
   attributes: {
     createdAt: { type: "number", autoCreatedAt: true },
     updatedAt: { type: "number", autoUpdatedAt: true },
