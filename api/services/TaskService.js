@@ -148,7 +148,7 @@ module.exports = {
 
     await Task.updateOne({ id }).set({
       isArchived: true,
-      archivedAt: new Date().toISOString(),
+      archivedAt: Date.now(),
     });
     return true;
   },
@@ -196,7 +196,7 @@ module.exports = {
 
     await Task.updateOne({ id }).set({
       isDeleted: true,
-      deletedAt: new Date().toISOString(),
+      deletedAt: Date.now(),
     });
 
     return true;
