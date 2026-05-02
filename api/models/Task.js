@@ -38,7 +38,8 @@ module.exports = {
 
     // 📅 Hạn chót (QUAN TRỌNG NHẤT)
     dueDate: {
-      type: "string",
+      type: "ref",
+      columnType: "text",
       description: "Hạn chót của task",
     },
 
