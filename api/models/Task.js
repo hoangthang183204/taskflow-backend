@@ -77,36 +77,30 @@ module.exports = {
     },
   },
 
-  // 🕐 Lifecycle hooks - Tự động theo dõi thời gian thực tế
   beforeCreate: async function (values, proceed) {
-    // Nếu tạo task với status = "doing", tự động ghi nhận thời gian bắt đầu
     if (values.status === "doing") {
-      const now = new Date().toISOString();
-      values.startDate = now; // Thời gian bắt đầu dự kiến
-      values.actualStartDate = now; // Thời gian bắt đầu thực tế
+      const now = Date.now(); // Dùng số thay vì ISO string
+      values.startDate = now;
+      values.actualStartDate = now;
     }
-
     return proceed();
   },
 
   beforeUpdate: async function (values, proceed) {
-    const now = new Date().toISOString();
+    const now = Date.now(); // Dùng số
 
-    // 🔥 KHI CHUYỂN STATUS TỪ "todo" → "doing"
     if (values.status === "doing" && !values.actualStartDate) {
       values.actualStartDate = now;
     }
 
-    // 🔥 KHI CHUYỂN STATUS TỪ "doing" → "done"
     if (values.status === "done" && !values.actualEndDate) {
       values.actualEndDate = now;
 
-      // Tự động tính số giờ thực tế nếu có actualStartDate
       if (values.actualStartDate) {
-        const start = new Date(values.actualStartDate);
-        const end = new Date(now);
+        const start = values.actualStartDate;
+        const end = now;
         const hours = (end - start) / (1000 * 60 * 60);
-        values.actualHours = Math.round(hours * 10) / 10; // Làm tròn 1 chữ số thập phân
+        values.actualHours = Math.round(hours * 10) / 10;
       }
     }
 
