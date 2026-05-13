@@ -1,11 +1,14 @@
-
 const jwt = require("jsonwebtoken");
 
 module.exports = async function (req, res, proceed) {
   const token = req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {
-    return res.unauthorized({ message: "Vui lòng đăng nhập." });
+    // SỬA: dùng res.status(401).json() thay vì res.unauthorized()
+    return res.status(401).json({ 
+      success: false,
+      message: "Vui lòng đăng nhập." 
+    });
   }
 
   try {
@@ -14,11 +17,14 @@ module.exports = async function (req, res, proceed) {
     return proceed();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.unauthorized({ message: "Token đã hết hạn." });
+      return res.status(401).json({ 
+        success: false,
+        message: "Token đã hết hạn." 
+      });
     }
-    return res.unauthorized({ message: "Token không hợp lệ." });
+    return res.status(401).json({ 
+      success: false,
+      message: "Token không hợp lệ." 
+    });
   }
 };
-
-
-// Muốn vào controller -> Phải có token -> kiểm tra token -> Ok thì được vào
