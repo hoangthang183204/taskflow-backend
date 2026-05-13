@@ -4,12 +4,6 @@
  */
 module.exports = {
   attributes: {
-    id: {
-      type: "number",
-      columnType: "integer",
-      autoIncrement: true,
-      required: true,
-    },
     boardId: {
       type: "string",
       required: true,

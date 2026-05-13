@@ -1,11 +1,5 @@
 module.exports = {
   attributes: {
-    id: {
-      type: "number",
-      columnType: "integer",
-      autoIncrement: true,
-      required: true,
-    },
     title: {
       type: "string",
       required: true,

@@ -1,11 +1,5 @@
 module.exports = {
   attributes: {
-    id: {
-      type: "number",
-      columnType: "integer",
-      autoIncrement: true,
-      required: true,
-    },
     name: { type: "string", required: true },
     description: { type: "string" },
     userId: { type: "string", required: true }, // Owner
