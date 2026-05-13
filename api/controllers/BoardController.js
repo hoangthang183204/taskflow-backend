@@ -1,4 +1,118 @@
 module.exports = {
+  addMember: async (req, res) => {
+    try {
+      const { boardId, userId, role } = req.body;
+
+      // Kiểm tra board tồn tại
+      const board = await Board.findOne({ id: boardId });
+      if (!board) {
+        return res.status(404).json({ message: "Board không tồn tại" });
+      }
+
+      // Kiểm tra quyền: chỉ owner hoặc admin mới được thêm member
+      const isOwner = String(board.userId) === String(req.user.id);
+      const isAdmin = await BoardMember.findOne({
+        boardId: boardId,
+        userId: req.user.id,
+        role: "admin",
+      });
+
+      if (!isOwner && !isAdmin) {
+        return res
+          .status(403)
+          .json({ message: "Bạn không có quyền thêm thành viên" });
+      }
+
+      // Kiểm tra user tồn tại
+      const user = await User.findOne({ id: userId });
+      if (!user) {
+        return res.status(404).json({ message: "User không tồn tại" });
+      }
+
+      // Kiểm tra đã là member chưa
+      const existing = await BoardMember.findOne({
+        boardId: boardId,
+        userId: userId,
+      });
+
+      if (existing) {
+        return res
+          .status(400)
+          .json({ message: "User đã là thành viên của board này" });
+      }
+
+      // Thêm member
+      const member = await BoardMember.create({
+        boardId: boardId,
+        userId: userId,
+        role: role || "member",
+        invitedAt: Date.now(),
+      }).fetch();
+
+      return res.status(201).json({ success: true, data: member });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+
+  // Xóa thành viên
+  removeMember: async (req, res) => {
+    try {
+      const { boardId, userId } = req.params;
+
+      const board = await Board.findOne({ id: boardId });
+      if (!board) {
+        return res.status(404).json({ message: "Board không tồn tại" });
+      }
+
+      // Không cho xóa owner
+      if (String(board.userId) === userId) {
+        return res
+          .status(400)
+          .json({ message: "Không thể xóa chủ sở hữu của board" });
+      }
+
+      // Kiểm tra quyền
+      const isOwner = String(board.userId) === String(req.user.id);
+      const isAdmin = await BoardMember.findOne({
+        boardId: boardId,
+        userId: req.user.id,
+        role: "admin",
+      });
+
+      if (!isOwner && !isAdmin) {
+        return res
+          .status(403)
+          .json({ message: "Bạn không có quyền xóa thành viên" });
+      }
+
+      await BoardMember.destroy({
+        boardId: boardId,
+        userId: userId,
+      });
+
+      return res
+        .status(200)
+        .json({ success: true, message: "Đã xóa thành viên" });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+
+  // Lấy danh sách thành viên
+  getMembers: async (req, res) => {
+    try {
+      const boardId = req.params.boardId;
+
+      const members = await BoardMember.find({ boardId: boardId }).populate(
+        "userId",
+      );
+
+      return res.status(200).json({ success: true, data: members });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
   getMyBoards: async (req, res) => {
     try {
       const myBoards = await Board.find({ userId: req.user.id });
@@ -104,33 +218,33 @@ module.exports = {
   delete: async (req, res) => {
     try {
       const board = await Board.findOne({ id: req.params.id });
+
       if (!board) {
-        return res.status(404).json({
-          success: false,
-          message: "Không tìm thấy board",
-        });
+        return res.status(404).json({ message: "Không tìm thấy board" });
       }
 
-      if (board.userId !== req.user.id) {
-        return res.status(403).json({
-          success: false,
-          message: "Bạn không có quyền xóa board này",
-        });
+      const isOwner = String(board.userId) === String(req.user.id);
+      const isAdmin = await BoardMember.findOne({
+        boardId: board.id,
+        userId: req.user.id,
+        role: "admin",
+      });
+
+      if (!isOwner && !isAdmin) {
+        return res
+          .status(403)
+          .json({ message: "Bạn không có quyền xóa board này" });
       }
 
       await Board.destroyOne({ id: req.params.id });
+
+      await BoardMember.destroy({ boardId: req.params.id });
+
       await Task.update({ boardId: req.params.id }).set({ boardId: null });
 
-      return res.status(200).json({
-        success: true,
-        message: "Đã xóa board",
-      });
+      return res.status(200).json({ success: true, message: "Đã xóa board" });
     } catch (err) {
-      console.error("delete board error:", err);
-      return res.status(500).json({
-        success: false,
-        message: err.message || "Lỗi server khi xóa board",
-      });
+      return res.status(500).json({ success: false, message: err.message });
     }
   },
 };
