@@ -115,11 +115,21 @@ module.exports = {
   },
   getMyBoards: async (req, res) => {
     try {
+      // Boards do user tạo
       const myBoards = await Board.find({ userId: req.user.id });
+
+      // Boards user được mời vào (loại trừ board đã tạo)
       const boardMembers = await BoardMember.find({ userId: req.user.id });
       const invitedBoardIds = boardMembers.map((m) => m.boardId);
-      const invitedBoards = await Board.find({ id: invitedBoardIds });
 
+      const myBoardIds = myBoards.map((b) => b.id);
+      const uniqueInvitedIds = invitedBoardIds.filter(
+        (id) => !myBoardIds.includes(id),
+      );
+
+      const invitedBoards = await Board.find({ id: uniqueInvitedIds });
+
+      // Gộp và đánh dấu role
       const allBoards = [
         ...myBoards.map((b) => ({
           ...b,
@@ -133,18 +143,10 @@ module.exports = {
         })),
       ];
 
-      // ✅ Trả về JSON nhất quán
-      return res.status(200).json({
-        success: true,
-        data: allBoards,
-      });
+      return res.status(200).json({ success: true, data: allBoards });
     } catch (err) {
       console.error("getMyBoards error:", err);
-      // ✅ Trả về JSON lỗi, không phải HTML
-      return res.status(500).json({
-        success: false,
-        message: err.message || "Lỗi server",
-      });
+      return res.status(500).json({ success: false, message: err.message });
     }
   },
 
