@@ -180,17 +180,20 @@ module.exports = {
         return res.notFound({ message: "Board không tồn tại" });
       }
 
-      // Kiểm tra quyền
-      const isOwner = board.userId === req.user.id;
+      const isOwner = String(board.userId) === String(req.user.id);
       const isMember = await BoardMember.findOne({
         boardId: boardId,
         userId: req.user.id,
+        role: "admin",
       });
 
       if (!isOwner && !isMember) {
-        return res.forbidden({
-          message: "Bạn không có quyền xem thành viên của board này",
-        });
+        console.log(
+          `Quyền bị từ chối: isOwner=${isOwner}, isAdmin=${!!isMember}`,
+        );
+        return res
+          .status(403)
+          .json({ message: "Bạn không có quyền thêm thành viên" });
       }
 
       // Lấy danh sách member
