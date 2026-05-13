@@ -1,7 +1,6 @@
-// api/models/Task.js
+
 module.exports = {
   attributes: {
-    // 📝 Cơ bản
     title: {
       type: "string",
       required: true,
@@ -13,7 +12,6 @@ module.exports = {
       description: "Mô tả chi tiết task",
     },
 
-    // 🏷️ Trạng thái
     status: {
       type: "string",
       isIn: ["todo", "doing", "done"],
@@ -21,14 +19,12 @@ module.exports = {
       description: "Trạng thái: todo, doing, done",
     },
 
-    // 👤 Người dùng
     userId: {
       model: "user",
       required: true,
       description: "Người tạo task",
     },
 
-    // ⭐ Ưu tiên
     priority: {
       type: "string",
       isIn: ["low", "medium", "high"],
@@ -36,14 +32,18 @@ module.exports = {
       description: "Độ ưu tiên: low, medium, high",
     },
 
-    // 📅 Hạn chót (QUAN TRỌNG NHẤT)
     dueDate: {
       type: "ref",
       columnType: "text",
       description: "Hạn chót của task",
     },
 
-    // 🗑️ Soft delete
+    boardId: {
+      type: "string",
+      allowNull: true,
+      description: "ID board chứa task",
+    },
+
     isDeleted: {
       type: "boolean",
       defaultsTo: false,
@@ -74,6 +74,22 @@ module.exports = {
       type: "string",
       allowNull: true,
       description: "Ghi chú cảm xúc",
+    },
+
+    assignedTo: {
+      type: "string",
+      allowNull: true,
+      description: "ID người được giao task",
+    },
+    assignedByName: {
+      type: "string",
+      allowNull: true,
+      description: "Tên người được giao task",
+    },
+    assignedAt: {
+      type: "number",
+      allowNull: true,
+      description: "Thời gian giao task",
     },
   },
 

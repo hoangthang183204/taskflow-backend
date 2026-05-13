@@ -1,26 +1,84 @@
-# task-management
+# TaskFlow - Backend
 
-a [Sails v1](https://sailsjs.com) application
+## Giới thiệu
+
+Backend API cho ứng dụng TaskFlow - Quản lý công việc thông minh. Được xây dựng bằng Sails.js và MongoDB.
+
+## Tính năng chính
+
+- Xác thực người dùng với JWT
+- Quản lý task: tạo, sửa, xóa, lưu trữ, khôi phục
+- Phân trang và lọc task
+- Xóa mềm và thùng rác
+- API RESTful chuẩn
+- CORS hỗ trợ frontend
+
+## Công nghệ sử dụng
+
+| Công nghệ | Phiên bản | Mục đích |
+|-----------|-----------|----------|
+| Sails.js | 1.5.17 | Framework chính |
+| MongoDB | 7.0 | Database |
+| JWT | 9.0.0 | Xác thực |
+| bcrypt | 5.1.1 | Mã hóa mật khẩu |
+
+## Cấu trúc thư mục
+
+TaskManagement/
+├── api/
+│ ├── controllers/ # Xử lý request/response
+│ ├── models/ # Schema database
+│ ├── policies/ # Phân quyền truy cập
+│ ├── services/ # Logic nghiệp vụ
+│ └── validators/ # Validate dữ liệu
+├── config/
+│ ├── datastores.js # Kết nối MongoDB
+│ ├── routes.js # API endpoints
+│ ├── security.js # Cấu hình CORS
+│ └── policies.js # Policy config
+├── test/ # Unit tests
+└── .env # Biến môi trường
 
 
-### Links
+## Yêu cầu hệ thống
 
-+ [Sails framework documentation](https://sailsjs.com/get-started)
-+ [Version notes / upgrading](https://sailsjs.com/documentation/upgrading)
-+ [Deployment tips](https://sailsjs.com/documentation/concepts/deployment)
-+ [Community support options](https://sailsjs.com/support)
-+ [Professional / enterprise options](https://sailsjs.com/enterprise)
+- Node.js 20 trở lên
+- MongoDB 7.0 trở lên
+
+## Cài đặt
+
+```bash
+# Clone repository
+git clone https://github.com/hoangthang183204/taskflow-backend.git
+cd taskflow-backend
+
+# Cài dependencies
+npm install
+
+# Tạo file .env
+cp .env.example .env
+
+# Chạy development
+sails lift
+
+NODE_ENV=development
+PORT=1337
+DATABASE_URL=mongodb://localhost:27017/taskflow
+JWT_SECRET=your_super_secret_key_change_this
+FRONTEND_URL=http://localhost:3000
 
 
-### Version info
+# Build image
+docker build -t taskflow-backend .
 
-This app was originally generated on Sat Apr 11 2026 17:38:11 GMT+0700 (GMT+07:00) using Sails v1.5.17.
+# Chạy container
+docker run -p 1337:1337 --env-file .env taskflow-backend
 
-<!-- Internally, Sails used [`sails-generate@2.0.13`](https://github.com/balderdashy/sails-generate/tree/v2.0.13/lib/core-generators/new). -->
+# Chạy tất cả test
+npm test
 
+# Chạy test cụ thể
+npm test -- AuthService.test.js
 
-
-<!--
-Note:  Generators are usually run using the globally-installed `sails` CLI (command-line interface).  This CLI version is _environment-specific_ rather than app-specific, thus over time, as a project's dependencies are upgraded or the project is worked on by different developers on different computers using different versions of Node.js, the Sails dependency in its package.json file may differ from the globally-installed Sails CLI release it was originally generated with.  (Be sure to always check out the relevant [upgrading guides](https://sailsjs.com/upgrading) before upgrading the version of Sails used by your app.  If you're stuck, [get help here](https://sailsjs.com/support).)
--->
-
+# Chạy với coverage
+npm test -- --coverage

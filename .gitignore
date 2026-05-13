@@ -82,3 +82,6 @@ nbproject
 node_history
 .node_history
 dump.rdb
+
+Dockerfile
+.dockerignore

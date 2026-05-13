@@ -13,19 +13,19 @@ module.exports.routes = {
 
   "POST /api/auth/register": "AuthController.register",
   "POST /api/auth/login": "AuthController.login",
-  
+
   "GET /api/auth/me": "AuthController.getMe",
   "PUT /api/auth/profile": "AuthController.updateProfile",
   "POST /api/auth/change-password": "AuthController.changePassword",
-  'DELETE /api/auth/delete': 'AuthController.deleteAccount',
+  "DELETE /api/auth/delete": "AuthController.deleteAccount",
 
   "PUT /api/task/:id/archive": "TaskController.archive",
   "PUT /api/task/:id/restore": "TaskController.restore",
 
-  'DELETE /api/task/:id/soft': 'TaskController.softDelete',    
-  'DELETE /api/task/:id/hard': 'TaskController.hardDelete',    
-  // 'PUT /api/task/:id/restore': 'TaskController.restoreFromTrash', 
-  'GET /api/task/trash': 'TaskController.getTrash',            
+  "DELETE /api/task/:id/soft": "TaskController.softDelete",
+  "DELETE /api/task/:id/hard": "TaskController.hardDelete",
+  // 'PUT /api/task/:id/restore': 'TaskController.restoreFromTrash',
+  "GET /api/task/trash": "TaskController.getTrash",
 
   // Task
   "POST /api/task": {
@@ -51,4 +51,18 @@ module.exports.routes = {
     action: "delete",
     policies: ["isAuthenticated"],
   },
+
+  "GET /api/board": "BoardController.getMyBoards",
+  "POST /api/board": "BoardController.create",
+  "GET /api/board/:id": "BoardController.getBoardDetail",
+  "PUT /api/board/:id": "BoardController.update",
+  "DELETE /api/board/:id": "BoardController.delete",
+
+  "POST /api/board/:boardId/members": "BoardMemberController.addMember",
+  "GET /api/board/:boardId/members": "BoardMemberController.getMembers",
+  "DELETE /api/board/:boardId/members/:userId":
+    "BoardMemberController.removeMember",
+
+  "GET /api/board/:boardId/members/assignable":
+    "BoardMemberController.getAssignableMembers",
 };

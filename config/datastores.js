@@ -13,7 +13,6 @@
  * https://sailsjs.com/config/datastores
  */
 
-
 module.exports.datastores = {
   default: {
     adapter: require('sails-postgresql'),
@@ -30,6 +29,9 @@ module.exports.datastores = {
 // };
 // Sails.js kết nối đến MongoDB ở database có tên là task_manager
 
-//  default: {
-//   adapter: "sails-mongo",
-//    url: "mongodb://127.0.0.1:27017/task_manager", // local
+// module.exports.datastores = {
+//   default: {
+//     adapter: "sails-mongo",
+//     url: "mongodb://127.0.0.1:27017/task_manager",
+//   },
+// };

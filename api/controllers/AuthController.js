@@ -41,7 +41,6 @@ module.exports = {
     }
   },
 
-  // api/controllers/AuthController.js
   login: async (req, res) => {
     try {
       const validation = authValidator.validateLogin(req.body);
@@ -78,7 +77,6 @@ module.exports = {
             "Mật khẩu không chính xác.",
             "INVALID_PASSWORD",
           );
-        // 🆕 Thêm case mới
         case "ACCOUNT_DELETED":
           return response.badRequest(
             res,

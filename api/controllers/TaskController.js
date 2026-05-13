@@ -23,6 +23,7 @@ module.exports = {
   }),
 
   find: handle(async (req, res) => {
+    // ⭐ Lấy tất cả query params
     const result = await TaskService.getTasks(req.user, req.query);
     const { tasks, total, page, limit } = result;
     return response.success(res, tasks, "Lấy danh sách task thành công.", 200, {
