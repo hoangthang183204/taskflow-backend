@@ -22,14 +22,14 @@ module.exports = {
       // ✅ Trả về JSON nhất quán
       return res.status(200).json({
         success: true,
-        data: allBoards
+        data: allBoards,
       });
     } catch (err) {
-      console.error('getMyBoards error:', err);
+      console.error("getMyBoards error:", err);
       // ✅ Trả về JSON lỗi, không phải HTML
       return res.status(500).json({
         success: false,
-        message: err.message || "Lỗi server"
+        message: err.message || "Lỗi server",
       });
     }
   },
@@ -38,13 +38,7 @@ module.exports = {
     try {
       const { name, description, color, icon } = req.body;
 
-      if (!name || !name.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "Tên board không được để trống"
-        });
-      }
-
+      // Tạo board
       const board = await Board.create({
         name: name.trim(),
         description: description || "",
@@ -53,17 +47,16 @@ module.exports = {
         icon: icon || "📋",
       }).fetch();
 
-      // ✅ Trả về JSON nhất quán
-      return res.status(201).json({
-        success: true,
-        data: board
-      });
+      await BoardMember.create({
+        boardId: board.id,
+        userId: req.user.id,
+        role: "admin",
+        invitedAt: Date.now(),
+      }).fetch();
+
+      return res.status(201).json({ success: true, data: board });
     } catch (err) {
-      console.error('create board error:', err);
-      return res.status(500).json({
-        success: false,
-        message: err.message || "Lỗi server khi tạo board"
-      });
+      return res.status(500).json({ success: false, message: err.message });
     }
   },
 
@@ -73,7 +66,7 @@ module.exports = {
       if (!board) {
         return res.status(404).json({
           success: false,
-          message: "Không tìm thấy board"
+          message: "Không tìm thấy board",
         });
       }
 
@@ -91,19 +84,19 @@ module.exports = {
       if (!hasAccess) {
         return res.status(403).json({
           success: false,
-          message: "Bạn không có quyền xem board này"
+          message: "Bạn không có quyền xem board này",
         });
       }
 
       return res.status(200).json({
         success: true,
-        data: board
+        data: board,
       });
     } catch (err) {
-      console.error('getBoardDetail error:', err);
+      console.error("getBoardDetail error:", err);
       return res.status(500).json({
         success: false,
-        message: err.message || "Lỗi server"
+        message: err.message || "Lỗi server",
       });
     }
   },
@@ -114,14 +107,14 @@ module.exports = {
       if (!board) {
         return res.status(404).json({
           success: false,
-          message: "Không tìm thấy board"
+          message: "Không tìm thấy board",
         });
       }
-      
+
       if (board.userId !== req.user.id) {
         return res.status(403).json({
           success: false,
-          message: "Bạn không có quyền xóa board này"
+          message: "Bạn không có quyền xóa board này",
         });
       }
 
@@ -130,13 +123,13 @@ module.exports = {
 
       return res.status(200).json({
         success: true,
-        message: "Đã xóa board"
+        message: "Đã xóa board",
       });
     } catch (err) {
-      console.error('delete board error:', err);
+      console.error("delete board error:", err);
       return res.status(500).json({
         success: false,
-        message: err.message || "Lỗi server khi xóa board"
+        message: err.message || "Lỗi server khi xóa board",
       });
     }
   },
