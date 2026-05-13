@@ -9,74 +9,67 @@ module.exports = {
       const { boardId } = req.params;
       const { email, role } = req.body;
 
-      if (!email) {
-        return res.badRequest({ message: "Vui lòng nhập email" });
-      }
-
-      // Kiểm tra board tồn tại
+      // 1. Kiểm tra board tồn tại
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.notFound({ message: "Board không tồn tại" });
-      }
-
-      // Kiểm tra quyền: chỉ owner mới được mời
-      if (board.userId !== req.user.id) {
-        return res.forbidden({
-          message: "Chỉ chủ board mới có thể mời thành viên",
+        return res.status(404).json({ 
+          success: false, 
+          message: "Board không tồn tại" 
         });
       }
 
-      // Tìm user theo email
-      const userToInvite = await User.findOne({
-        email: email.toLowerCase().trim(),
-      });
-      if (!userToInvite) {
-        return res.notFound({
-          message: "Không tìm thấy người dùng với email này",
+      // 2. Kiểm tra quyền (OWNER) - Ép kiểu tuyệt đối
+      const isOwner = String(board.userId) === String(req.user.id);
+      if (!isOwner) {
+        console.error(`❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`);
+        return res.status(403).json({
+          success: false,
+          message: "Chỉ chủ board mới có quyền mời thành viên",
         });
       }
 
-      // Không thể mời chính mình
-      if (userToInvite.id === req.user.id) {
-        return res.badRequest({ message: "Không thể mời chính mình" });
+      // 3. Tìm user qua email
+      const userToAdd = await User.findOne({ email: email });
+      if (!userToAdd) {
+        return res.status(404).json({
+          success: false,
+          message: `Không tìm thấy user với email: ${email}`,
+        });
       }
 
-      // Kiểm tra đã là thành viên chưa
+      const userId = userToAdd.id;
+
+      // 4. Kiểm tra user đã là member chưa
       const existing = await BoardMember.findOne({
         boardId: boardId,
-        userId: userToInvite.id,
+        userId: userId,
       });
-
       if (existing) {
-        return res.badRequest({
-          message: "Người dùng đã là thành viên của board này",
+        return res.status(400).json({
+          success: false,
+          message: "User đã là thành viên của board này",
         });
       }
 
-      // Thêm thành viên
+      // 5. Thêm member
       const member = await BoardMember.create({
         boardId: boardId,
-        userId: userToInvite.id,
+        userId: userId,
         role: role || "member",
+        invitedAt: Date.now(),
       }).fetch();
 
-      return res.ok({
-        message: `Đã mời ${userToInvite.name} vào board thành công!`,
-        member: {
-          id: userToInvite.id,
-          name: userToInvite.name,
-          email: userToInvite.email,
-          role: role || "member",
-        },
+      return res.status(201).json({ 
+        success: true, 
+        message: "Đã thêm thành viên", 
+        data: member 
       });
     } catch (err) {
-      console.error("Add member error:", err);
-      if (err.message === "User already in this board") {
-        return res.badRequest({
-          message: "Người dùng đã là thành viên của board này",
-        });
-      }
-      return res.serverError({ message: "Lỗi server, vui lòng thử lại sau" });
+      console.error("Lỗi trong addMember:", err);
+      return res.status(500).json({ 
+        success: false, 
+        message: err.message 
+      });
     }
   },
 
@@ -88,17 +81,22 @@ module.exports = {
       // Kiểm tra board tồn tại
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.notFound({ message: "Board không tồn tại" });
+        return res.status(404).json({ 
+          success: false,
+          message: "Board không tồn tại" 
+        });
       }
 
       // Kiểm tra quyền xem
+      const isOwner = String(board.userId) === String(req.user.id);
       const isMember = await BoardMember.findOne({
         boardId: boardId,
         userId: req.user.id,
       });
 
-      if (board.userId !== req.user.id && !isMember) {
-        return res.forbidden({
+      if (!isOwner && !isMember) {
+        return res.status(403).json({
+          success: false,
           message: "Bạn không có quyền xem thành viên của board này",
         });
       }
@@ -131,10 +129,16 @@ module.exports = {
         });
       }
 
-      return res.ok(memberList);
+      return res.status(200).json({ 
+        success: true, 
+        data: memberList 
+      });
     } catch (err) {
       console.error("Get members error:", err);
-      return res.serverError({ message: "Lỗi server" });
+      return res.status(500).json({ 
+        success: false, 
+        message: "Lỗi server" 
+      });
     }
   },
 
@@ -145,31 +149,47 @@ module.exports = {
 
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.notFound({ message: "Board không tồn tại" });
+        return res.status(404).json({ 
+          success: false,
+          message: "Board không tồn tại" 
+        });
       }
 
       // Chỉ owner mới được xóa thành viên
-      if (board.userId !== req.user.id) {
-        return res.forbidden({
+      const isOwner = String(board.userId) === String(req.user.id);
+      if (!isOwner) {
+        return res.status(403).json({
+          success: false,
           message: "Chỉ chủ board mới có thể xóa thành viên",
         });
       }
 
       // Không thể xóa chính mình
-      if (userId === req.user.id) {
-        return res.badRequest({
+      if (String(userId) === String(req.user.id)) {
+        return res.status(400).json({
+          success: false,
           message: "Không thể xóa chính mình khỏi board",
         });
       }
 
-      await BoardMember.destroyOne({ boardId, userId });
+      await BoardMember.destroy({ 
+        boardId: boardId, 
+        userId: userId 
+      });
 
-      return res.ok({ message: "Đã xóa thành viên khỏi board" });
+      return res.status(200).json({ 
+        success: true, 
+        message: "Đã xóa thành viên khỏi board" 
+      });
     } catch (err) {
       console.error("Remove member error:", err);
-      return res.serverError({ message: "Lỗi server" });
+      return res.status(500).json({ 
+        success: false, 
+        message: "Lỗi server" 
+      });
     }
   },
+
   // Lấy danh sách thành viên có thể gán task (không bao gồm owner)
   getAssignableMembers: async (req, res) => {
     try {
@@ -177,23 +197,25 @@ module.exports = {
 
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.notFound({ message: "Board không tồn tại" });
+        return res.status(404).json({ 
+          success: false,
+          message: "Board không tồn tại" 
+        });
       }
 
       const isOwner = String(board.userId) === String(req.user.id);
-      const isMember = await BoardMember.findOne({
+      const isAdmin = await BoardMember.findOne({
         boardId: boardId,
         userId: req.user.id,
         role: "admin",
       });
 
-      if (!isOwner && !isMember) {
-        console.log(
-          `Quyền bị từ chối: isOwner=${isOwner}, isAdmin=${!!isMember}`,
-        );
-        return res
-          .status(403)
-          .json({ message: "Bạn không có quyền thêm thành viên" });
+      if (!isOwner && !isAdmin) {
+        console.log(`Quyền bị từ chối: isOwner=${isOwner}, isAdmin=${!!isAdmin}`);
+        return res.status(403).json({ 
+          success: false,
+          message: "Bạn không có quyền xem danh sách thành viên" 
+        });
       }
 
       // Lấy danh sách member
@@ -217,10 +239,16 @@ module.exports = {
         });
       }
 
-      return res.ok(memberList);
+      return res.status(200).json({ 
+        success: true, 
+        data: memberList 
+      });
     } catch (err) {
       console.error("Get assignable members error:", err);
-      return res.serverError({ message: "Lỗi server" });
+      return res.status(500).json({ 
+        success: false, 
+        message: "Lỗi server" 
+      });
     }
   },
 };
