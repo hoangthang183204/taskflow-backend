@@ -54,6 +54,7 @@ module.exports.routes = {
 
   "PUT /api/task/:id/assign": "TaskController.assign",
 
+
   "GET /api/board": "BoardController.getMyBoards",
   "POST /api/board": "BoardController.create",
   "GET /api/board/:id": "BoardController.getBoardDetail",

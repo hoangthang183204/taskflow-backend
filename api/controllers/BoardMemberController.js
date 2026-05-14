@@ -17,12 +17,10 @@ module.exports = {
         });
       }
 
-      // 2. Kiểm tra quyền (OWNER) - Ép kiểu tuyệt đối
+      // 2. Kiểm tra quyền: CHỈ OWNER mới được mời thành viên
       const isOwner = String(board.userId) === String(req.user.id);
       if (!isOwner) {
-        console.error(
-          `❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`,
-        );
+        console.error(`❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`);
         return res.status(403).json({
           success: false,
           message: "Chỉ chủ board mới có quyền mời thành viên",
@@ -87,6 +85,7 @@ module.exports = {
         });
       }
 
+      // ✅ Owner và member đều có quyền xem danh sách thành viên
       const isOwner = String(board.userId) === String(req.user.id);
       const isMember = await BoardMember.findOne({
         boardId: boardId,
@@ -116,7 +115,7 @@ module.exports = {
         };
       });
 
-      // Thêm owner vào danh sách
+      // Thêm owner vào danh sách (owner không cần trong boardmember)
       const owner = await User.findOne({ id: board.userId });
       if (owner) {
         memberList.unshift({
@@ -153,6 +152,7 @@ module.exports = {
         });
       }
 
+      // ✅ CHỈ OWNER mới được xóa thành viên
       const isOwner = String(board.userId) === String(req.user.id);
       if (!isOwner) {
         return res.status(403).json({
@@ -161,6 +161,7 @@ module.exports = {
         });
       }
 
+      // Không thể xóa chính mình
       if (String(userId) === String(req.user.id)) {
         return res.status(400).json({
           success: false,
@@ -198,24 +199,29 @@ module.exports = {
         });
       }
 
+      // ✅ Owner được xem tất cả thành viên (không cần kiểm tra admin)
       const isOwner = String(board.userId) === String(req.user.id);
-      const isAdmin = await BoardMember.findOne({
-        boardId: boardId,
-        userId: req.user.id,
-        role: "admin",
-      });
-
-      if (!isOwner && !isAdmin) {
-        console.log(
-          `Quyền bị từ chối: isOwner=${isOwner}, isAdmin=${!!isAdmin}`,
-        );
-        return res.status(403).json({
-          success: false,
-          message: "Bạn không có quyền xem danh sách thành viên",
+      
+      if (!isOwner) {
+        // Nếu không phải owner, kiểm tra xem có phải member không
+        const isMember = await BoardMember.findOne({
+          boardId: boardId,
+          userId: req.user.id,
         });
+        
+        if (!isMember) {
+          return res.status(403).json({
+            success: false,
+            message: "Bạn không có quyền xem danh sách thành viên",
+          });
+        }
+        
+        // Member có thể xem nhưng chỉ owner mới có thể gán task? 
+        // Tùy logic: có thể cho phép member gán task cho người khác không?
+        // Ở đây tôi giữ nguyên: member cũng có thể xem danh sách
       }
 
-      // Lấy danh sách member
+      // Lấy danh sách member (không bao gồm owner)
       const members = await BoardMember.find({ boardId });
       const memberIds = members.map((m) => m.userId);
       const memberUsers = await User.find({ id: memberIds });
@@ -226,7 +232,7 @@ module.exports = {
         email: user.email,
       }));
 
-      // Thêm owner vào danh sách
+      // Thêm owner vào đầu danh sách
       const owner = await User.findOne({ id: board.userId });
       if (owner) {
         memberList.unshift({
@@ -236,9 +242,14 @@ module.exports = {
         });
       }
 
+      // Lọc bỏ trùng lặp (nếu owner vô tình có trong memberList)
+      const uniqueMemberList = memberList.filter(
+        (member, index, self) => index === self.findIndex(m => String(m.id) === String(member.id))
+      );
+
       return res.status(200).json({
         success: true,
-        data: memberList,
+        data: uniqueMemberList,
       });
     } catch (err) {
       console.error("Get assignable members error:", err);
