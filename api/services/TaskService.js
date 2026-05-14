@@ -138,26 +138,26 @@ module.exports = {
     return { tasks: tasksWithEmail, total, page, limit };
   },
 
-  // assignTask: async (user, taskId, assignedTo) => {
-  //   const task = await Task.findOne({ id: taskId });
-  //   if (!task) {
-  //     throw createError("TASK_NOT_FOUND", "Không tìm thấy task");
-  //   }
-  //   const isOwner = task.userId === user.id;
+  assignTask: async (user, taskId, assignedTo) => {
+    const task = await Task.findOne({ id: taskId });
+    if (!task) {
+      throw createError("TASK_NOT_FOUND", "Không tìm thấy task");
+    }
+    const isOwner = task.userId === user.id;
 
-  //   const assignedUser = await User.findOne({ id: assignedTo });
-  //   if (!assignedUser) {
-  //     throw createError("USER_NOT_FOUND", "Không tìm thấy người dùng");
-  //   }
+    const assignedUser = await User.findOne({ id: assignedTo });
+    if (!assignedUser) {
+      throw createError("USER_NOT_FOUND", "Không tìm thấy người dùng");
+    }
 
-  //   const updatedTask = await Task.updateOne({ id: taskId }).set({
-  //     assignedTo: assignedTo,
-  //     assignedByName: assignedUser.name,
-  //     assignedAt: Date.now(),
-  //   });
+    const updatedTask = await Task.updateOne({ id: taskId }).set({
+      assignedTo: assignedTo,
+      assignedByName: assignedUser.name,
+      assignedAt: Date.now(),
+    });
 
-  //   return updatedTask;
-  // },
+    return updatedTask;
+  },
 
   updateTask: async (user, id, rawData) => {
     if (!id || typeof id !== "string") {
@@ -361,41 +361,4 @@ module.exports = {
     };
   },
 
-  assignTask: async (user, taskId, assignedTo) => {
-    const task = await Task.findOne({ id: taskId, isDeleted: false });
-    if (!task) {
-      throw createError("TASK_NOT_FOUND", "Không tìm thấy task", 404);
-    }
-
-    // Kiểm tra quyền (chủ board hoặc admin mới được gán)
-    const board = await Board.findOne({ id: task.boardId });
-    const isOwner = board && String(board.userId) === String(user.id);
-    const isAdmin = await BoardMember.findOne({
-      boardId: task.boardId,
-      userId: user.id,
-      role: "admin",
-    });
-
-    if (!isOwner && !isAdmin) {
-      throw createError("FORBIDDEN", "Bạn không có quyền gán task", 403);
-    }
-
-    let assignedByName = null;
-    if (assignedTo && assignedTo !== "") {
-      const assignedUser = await User.findOne({ id: assignedTo });
-      if (!assignedUser) {
-        throw createError("USER_NOT_FOUND", "Không tìm thấy người dùng", 404);
-      }
-      assignedByName = assignedUser.name;
-    }
-
-    // Cập nhật task
-    const updatedTask = await Task.updateOne({ id: taskId }).set({
-      assignedTo: assignedTo || null,
-      assignedByName: assignedByName,
-      assignedAt: assignedTo ? Date.now() : null,
-    });
-
-    return updatedTask;
-  },
 };
