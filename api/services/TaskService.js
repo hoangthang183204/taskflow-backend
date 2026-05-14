@@ -45,8 +45,7 @@ module.exports = {
       const board = await Board.findOne({ id: query.boardId });
 
       if (board) {
-        // Kiểm tra quyền: owner hoặc member được mời
-        const isOwner = board.userId === user.id;
+        const isOwner = String(board.userId) === String(user.id);
         const isMember = await BoardMember.findOne({
           boardId: board.id,
           userId: user.id,
