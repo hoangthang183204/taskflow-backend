@@ -11,16 +11,18 @@ module.exports = {
       // 1. Kiểm tra board tồn tại
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Board không tồn tại" 
+        return res.status(404).json({
+          success: false,
+          message: "Board không tồn tại",
         });
       }
 
       // 2. Kiểm tra quyền (OWNER) - Ép kiểu tuyệt đối
       const isOwner = String(board.userId) === String(req.user.id);
       if (!isOwner) {
-        console.error(`❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`);
+        console.error(
+          `❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`,
+        );
         return res.status(403).json({
           success: false,
           message: "Chỉ chủ board mới có quyền mời thành viên",
@@ -58,16 +60,16 @@ module.exports = {
         invitedAt: Date.now(),
       }).fetch();
 
-      return res.status(201).json({ 
-        success: true, 
-        message: "Đã thêm thành viên", 
-        data: member 
+      return res.status(201).json({
+        success: true,
+        message: "Đã thêm thành viên",
+        data: member,
       });
     } catch (err) {
       console.error("Lỗi trong addMember:", err);
-      return res.status(500).json({ 
-        success: false, 
-        message: err.message 
+      return res.status(500).json({
+        success: false,
+        message: err.message,
       });
     }
   },
@@ -79,9 +81,9 @@ module.exports = {
       // Kiểm tra board tồn tại
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: "Board không tồn tại" 
+          message: "Board không tồn tại",
         });
       }
 
@@ -104,7 +106,7 @@ module.exports = {
       const users = await User.find({ id: userIds });
 
       const memberList = members.map((member) => {
-        const user = users.find((u) => u.id === member.userId);
+        const user = users.find((u) => String(u.id) === String(member.userId));
         return {
           id: member.userId,
           name: user?.name || "Unknown",
@@ -126,15 +128,15 @@ module.exports = {
         });
       }
 
-      return res.status(200).json({ 
-        success: true, 
-        data: memberList 
+      return res.status(200).json({
+        success: true,
+        data: memberList,
       });
     } catch (err) {
       console.error("Get members error:", err);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Lỗi server" 
+      return res.status(500).json({
+        success: false,
+        message: "Lỗi server",
       });
     }
   },
@@ -145,9 +147,9 @@ module.exports = {
 
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: "Board không tồn tại" 
+          message: "Board không tồn tại",
         });
       }
 
@@ -166,20 +168,20 @@ module.exports = {
         });
       }
 
-      await BoardMember.destroy({ 
-        boardId: boardId, 
-        userId: userId 
+      await BoardMember.destroy({
+        boardId: boardId,
+        userId: userId,
       });
 
-      return res.status(200).json({ 
-        success: true, 
-        message: "Đã xóa thành viên khỏi board" 
+      return res.status(200).json({
+        success: true,
+        message: "Đã xóa thành viên khỏi board",
       });
     } catch (err) {
       console.error("Remove member error:", err);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Lỗi server" 
+      return res.status(500).json({
+        success: false,
+        message: "Lỗi server",
       });
     }
   },
@@ -190,9 +192,9 @@ module.exports = {
 
       const board = await Board.findOne({ id: boardId });
       if (!board) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: "Board không tồn tại" 
+          message: "Board không tồn tại",
         });
       }
 
@@ -204,10 +206,12 @@ module.exports = {
       });
 
       if (!isOwner && !isAdmin) {
-        console.log(`Quyền bị từ chối: isOwner=${isOwner}, isAdmin=${!!isAdmin}`);
-        return res.status(403).json({ 
+        console.log(
+          `Quyền bị từ chối: isOwner=${isOwner}, isAdmin=${!!isAdmin}`,
+        );
+        return res.status(403).json({
           success: false,
-          message: "Bạn không có quyền xem danh sách thành viên" 
+          message: "Bạn không có quyền xem danh sách thành viên",
         });
       }
 
@@ -232,15 +236,15 @@ module.exports = {
         });
       }
 
-      return res.status(200).json({ 
-        success: true, 
-        data: memberList 
+      return res.status(200).json({
+        success: true,
+        data: memberList,
       });
     } catch (err) {
       console.error("Get assignable members error:", err);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Lỗi server" 
+      return res.status(500).json({
+        success: false,
+        message: "Lỗi server",
       });
     }
   },
