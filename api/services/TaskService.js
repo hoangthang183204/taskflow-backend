@@ -139,17 +139,39 @@ module.exports = {
   },
 
   assignTask: async (user, taskId, assignedTo) => {
+    // 1. Tìm task
     const task = await Task.findOne({ id: taskId });
     if (!task) {
-      throw createError("TASK_NOT_FOUND", "Không tìm thấy task");
+      throw createError("TASK_NOT_FOUND", "Không tìm thấy task", 404);
     }
-    const isOwner = task.userId === user.id;
 
+    // 2. Tìm board của task
+    const board = await Board.findOne({ id: task.boardId });
+    if (!board) {
+      throw createError(
+        "BOARD_NOT_FOUND",
+        "Không tìm thấy board của task",
+        404,
+      );
+    }
+
+    // 3. ✅ Kiểm tra quyền: NGƯỜI GÁN PHẢI LÀ CHỦ BOARD (OWNER)
+    const isOwner = String(board.userId) === String(user.id);
+    if (!isOwner) {
+      throw createError(
+        "FORBIDDEN",
+        "Bạn không có quyền gán task. Chỉ chủ board mới có quyền này.",
+        403,
+      );
+    }
+
+    // 4. Tìm người được gán
     const assignedUser = await User.findOne({ id: assignedTo });
     if (!assignedUser) {
-      throw createError("USER_NOT_FOUND", "Không tìm thấy người dùng");
+      throw createError("USER_NOT_FOUND", "Không tìm thấy người dùng", 404);
     }
 
+    // 5. Cập nhật task
     const updatedTask = await Task.updateOne({ id: taskId }).set({
       assignedTo: assignedTo,
       assignedByName: assignedUser.name,
@@ -360,5 +382,4 @@ module.exports = {
       totalPages: Math.ceil(total / limit),
     };
   },
-
 };

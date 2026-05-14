@@ -199,11 +199,9 @@ module.exports = {
         });
       }
 
-      // ✅ Owner được xem tất cả thành viên (không cần kiểm tra admin)
       const isOwner = String(board.userId) === String(req.user.id);
       
       if (!isOwner) {
-        // Nếu không phải owner, kiểm tra xem có phải member không
         const isMember = await BoardMember.findOne({
           boardId: boardId,
           userId: req.user.id,
@@ -216,12 +214,8 @@ module.exports = {
           });
         }
         
-        // Member có thể xem nhưng chỉ owner mới có thể gán task? 
-        // Tùy logic: có thể cho phép member gán task cho người khác không?
-        // Ở đây tôi giữ nguyên: member cũng có thể xem danh sách
       }
 
-      // Lấy danh sách member (không bao gồm owner)
       const members = await BoardMember.find({ boardId });
       const memberIds = members.map((m) => m.userId);
       const memberUsers = await User.find({ id: memberIds });
