@@ -155,12 +155,23 @@ module.exports = {
       );
     }
 
-    // 3. ✅ Kiểm tra quyền: NGƯỜI GÁN PHẢI LÀ CHỦ BOARD (OWNER)
+    // 3. ✅ Kiểm tra quyền: NGƯỜI GÁN PHẢI LÀ CHỦ BOARD HOẶC ADMIN
     const isOwner = String(board.userId) === String(user.id);
-    if (!isOwner) {
+
+    // Kiểm tra admin trong board (nếu có)
+    const isAdmin = await BoardMember.findOne({
+      boardId: task.boardId,
+      userId: user.id,
+      role: "admin",
+    });
+
+    if (!isOwner && !isAdmin) {
+      console.log(
+        `❌ Gán task thất bại: user=${user.id}, boardOwner=${board.userId}, isAdmin=${!!isAdmin}`,
+      );
       throw createError(
         "FORBIDDEN",
-        "Bạn không có quyền gán task. Chỉ chủ board mới có quyền này.",
+        "Bạn không có quyền gán task. Chỉ chủ board hoặc admin mới có quyền này.",
         403,
       );
     }
@@ -177,6 +188,10 @@ module.exports = {
       assignedByName: assignedUser.name,
       assignedAt: Date.now(),
     });
+
+    console.log(
+      `✅ Gán task thành công: task=${taskId}, assignedTo=${assignedTo}, by=${user.id}`,
+    );
 
     return updatedTask;
   },
