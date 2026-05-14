@@ -81,4 +81,12 @@ module.exports = {
       },
     );
   }),
+
+  assign: handle(async (req, res) => {
+    const { id } = req.params;
+    const { assignedTo } = req.body;
+
+    const task = await TaskService.assignTask(req.user, id, assignedTo);
+    return response.success(res, task, "Đã gán task thành công.");
+  }),
 };

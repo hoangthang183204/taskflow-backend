@@ -3,7 +3,6 @@
  * Controller quản lý thành viên board
  */
 module.exports = {
-  // Thêm thành viên vào board
   addMember: async (req, res) => {
     try {
       const { boardId } = req.params;
@@ -73,7 +72,6 @@ module.exports = {
     }
   },
 
-  // Lấy danh sách thành viên của board
   getMembers: async (req, res) => {
     try {
       const { boardId } = req.params;
@@ -87,7 +85,6 @@ module.exports = {
         });
       }
 
-      // Kiểm tra quyền xem
       const isOwner = String(board.userId) === String(req.user.id);
       const isMember = await BoardMember.findOne({
         boardId: boardId,
@@ -142,7 +139,6 @@ module.exports = {
     }
   },
 
-  // Xóa thành viên khỏi board
   removeMember: async (req, res) => {
     try {
       const { boardId, userId } = req.params;
@@ -155,7 +151,6 @@ module.exports = {
         });
       }
 
-      // Chỉ owner mới được xóa thành viên
       const isOwner = String(board.userId) === String(req.user.id);
       if (!isOwner) {
         return res.status(403).json({
@@ -164,7 +159,6 @@ module.exports = {
         });
       }
 
-      // Không thể xóa chính mình
       if (String(userId) === String(req.user.id)) {
         return res.status(400).json({
           success: false,
@@ -190,7 +184,6 @@ module.exports = {
     }
   },
 
-  // Lấy danh sách thành viên có thể gán task (không bao gồm owner)
   getAssignableMembers: async (req, res) => {
     try {
       const { boardId } = req.params;

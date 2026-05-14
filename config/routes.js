@@ -52,17 +52,18 @@ module.exports.routes = {
     policies: ["isAuthenticated"],
   },
 
+  'PUT /api/task/:id/assign': 'TaskController.assign',
+
   "GET /api/board": "BoardController.getMyBoards",
   "POST /api/board": "BoardController.create",
   "GET /api/board/:id": "BoardController.getBoardDetail",
   "PUT /api/board/:id": "BoardController.update",
   "DELETE /api/board/:id": "BoardController.delete",
 
-  "POST /api/board/:boardId/members": "BoardMemberController.addMember",
   "GET /api/board/:boardId/members": "BoardMemberController.getMembers",
+  "POST /api/board/:boardId/members": "BoardMemberController.addMember",
   "DELETE /api/board/:boardId/members/:userId":
     "BoardMemberController.removeMember",
-
   "GET /api/board/:boardId/members/assignable":
     "BoardMemberController.getAssignableMembers",
 };
