@@ -73,7 +73,7 @@ module.exports = {
       }
 
       let hasAccess = false;
-      if (board.userId === req.user.id) {
+      if (String(board.userId) === String(req.user.id)) {
         hasAccess = true;
       } else {
         const isMember = await BoardMember.findOne({
