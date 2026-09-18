@@ -1,60 +1,28 @@
-/**
- * HTTP Server Settings
- * (sails.config.http)
- *
- * Configuration for the underlying HTTP server in Sails.
- * (for additional recommended settings, see `config/env/production.js`)
- *
- * For more information on configuration, check out:
- * https://sailsjs.com/config/http
- */
-
+// config/http.js
 module.exports.http = {
-
-  /****************************************************************************
-  *                                                                           *
-  * Sails/Express middleware to run for every HTTP request.                   *
-  * (Only applies to HTTP requests -- not virtual WebSocket requests.)        *
-  *                                                                           *
-  * https://sailsjs.com/documentation/concepts/middleware                     *
-  *                                                                           *
-  ****************************************************************************/
-
   middleware: {
+    order: [
+      "cookieParser",
+      "session",
+      "bodyParser",
+      "compress",
+      "trustProxy",    // ✅ Đặt TRƯỚC router
+      "poweredBy",
+      "router",
+      "www",
+      "favicon",
+    ],
 
-    /***************************************************************************
-    *                                                                          *
-    * The order in which middleware should be run for HTTP requests.           *
-    * (This Sails app's routes are handled by the "router" middleware below.)  *
-    *                                                                          *
-    ***************************************************************************/
+    // ✅ Trust proxy — chạy sớm để rate limit lấy đúng IP
+    trustProxy: function (req, res, next) {
+      req.app.set("trust proxy", 1);
+      next();
+    },
 
-    // order: [
-    //   'cookieParser',
-    //   'session',
-    //   'bodyParser',
-    //   'compress',
-    //   'poweredBy',
-    //   'router',
-    //   'www',
-    //   'favicon',
-    // ],
-
-
-    /***************************************************************************
-    *                                                                          *
-    * The body parser that will handle incoming multipart HTTP requests.       *
-    *                                                                          *
-    * https://sailsjs.com/config/http#?customizing-the-body-parser             *
-    *                                                                          *
-    ***************************************************************************/
-
-    // bodyParser: (function _configureBodyParser(){
-    //   var skipper = require('skipper');
-    //   var middlewareFn = skipper({ strict: true });
-    //   return middlewareFn;
-    // })(),
-
+    // ✅ Ẩn X-Powered-By (bảo mật)
+    poweredBy: function (req, res, next) {
+      res.removeHeader("X-Powered-By");
+      next();
+    },
   },
-
 };

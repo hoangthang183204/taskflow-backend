@@ -8,7 +8,16 @@ module.exports = {
       const { boardId } = req.params;
       const { email, role } = req.body;
 
-      // 1. Kiểm tra board tồn tại
+      const { allowed } = await PermissionService.canManageBoard(
+        req.user.id,
+        boardId,
+      );
+      if (!allowed) {
+        return res
+          .status(403)
+          .json({ success: false, message: "Không có quyền" });
+      }
+
       const board = await Board.findOne({ id: boardId });
       if (!board) {
         return res.status(404).json({
@@ -17,17 +26,17 @@ module.exports = {
         });
       }
 
-      // 2. Kiểm tra quyền: CHỈ OWNER mới được mời thành viên
       const isOwner = String(board.userId) === String(req.user.id);
       if (!isOwner) {
-        console.error(`❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`);
+        console.error(
+          `❌ Quyền bị từ chối: board.userId=${board.userId}, req.user.id=${req.user.id}`,
+        );
         return res.status(403).json({
           success: false,
           message: "Chỉ chủ board mới có quyền mời thành viên",
         });
       }
 
-      // 3. Tìm user qua email
       const userToAdd = await User.findOne({ email: email });
       if (!userToAdd) {
         return res.status(404).json({
@@ -38,7 +47,6 @@ module.exports = {
 
       const userId = userToAdd.id;
 
-      // 4. Kiểm tra user đã là member chưa
       const existing = await BoardMember.findOne({
         boardId: boardId,
         userId: userId,
@@ -50,7 +58,6 @@ module.exports = {
         });
       }
 
-      // 5. Thêm member
       const member = await BoardMember.create({
         boardId: boardId,
         userId: userId,
@@ -76,22 +83,18 @@ module.exports = {
     try {
       const { boardId } = req.params;
 
-      // Kiểm tra board tồn tại
-      const board = await Board.findOne({ id: boardId });
+      const [board, isMember] = await Promise.all([
+        Board.findOne({ id: boardId }),
+        BoardMember.findOne({ boardId, userId: req.user.id }),
+      ]);
+
       if (!board) {
-        return res.status(404).json({
-          success: false,
-          message: "Board không tồn tại",
-        });
+        return res
+          .status(404)
+          .json({ success: false, message: "Board không tồn tại" });
       }
 
-      // ✅ Owner và member đều có quyền xem danh sách thành viên
       const isOwner = String(board.userId) === String(req.user.id);
-      const isMember = await BoardMember.findOne({
-        boardId: boardId,
-        userId: req.user.id,
-      });
-
       if (!isOwner && !isMember) {
         return res.status(403).json({
           success: false,
@@ -99,23 +102,23 @@ module.exports = {
         });
       }
 
-      // Lấy danh sách thành viên được mời
       const members = await BoardMember.find({ boardId });
       const userIds = members.map((m) => m.userId);
-      const users = await User.find({ id: userIds });
+
+      const users = userIds.length ? await User.find({ id: userIds }) : [];
+      const userMap = new Map(users.map((u) => [String(u.id), u]));
 
       const memberList = members.map((member) => {
-        const user = users.find((u) => String(u.id) === String(member.userId));
+        const u = userMap.get(String(member.userId));
         return {
           id: member.userId,
-          name: user?.name || "Unknown",
-          email: user?.email || "",
+          name: u?.name || "Unknown",
+          email: u?.email || "",
           role: member.role,
           invitedAt: member.invitedAt,
         };
       });
 
-      // Thêm owner vào danh sách (owner không cần trong boardmember)
       const owner = await User.findOne({ id: board.userId });
       if (owner) {
         memberList.unshift({
@@ -127,16 +130,10 @@ module.exports = {
         });
       }
 
-      return res.status(200).json({
-        success: true,
-        data: memberList,
-      });
+      return res.status(200).json({ success: true, data: memberList });
     } catch (err) {
       console.error("Get members error:", err);
-      return res.status(500).json({
-        success: false,
-        message: "Lỗi server",
-      });
+      return res.status(500).json({ success: false, message: "Lỗi server" });
     }
   },
 
@@ -152,7 +149,6 @@ module.exports = {
         });
       }
 
-      // ✅ CHỈ OWNER mới được xóa thành viên
       const isOwner = String(board.userId) === String(req.user.id);
       if (!isOwner) {
         return res.status(403).json({
@@ -161,7 +157,6 @@ module.exports = {
         });
       }
 
-      // Không thể xóa chính mình
       if (String(userId) === String(req.user.id)) {
         return res.status(400).json({
           success: false,
@@ -191,7 +186,12 @@ module.exports = {
     try {
       const { boardId } = req.params;
 
-      const board = await Board.findOne({ id: boardId });
+      // ✅ BỎ .select() — fetch full rồi map
+      const [board, memberCheck] = await Promise.all([
+        Board.findOne({ id: boardId }),
+        BoardMember.findOne({ boardId, userId: req.user.id }),
+      ]);
+
       if (!board) {
         return res.status(404).json({
           success: false,
@@ -200,50 +200,54 @@ module.exports = {
       }
 
       const isOwner = String(board.userId) === String(req.user.id);
-      
-      if (!isOwner) {
-        const isMember = await BoardMember.findOne({
-          boardId: boardId,
-          userId: req.user.id,
+      if (!isOwner && !memberCheck) {
+        return res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền xem danh sách thành viên",
         });
-        
-        if (!isMember) {
-          return res.status(403).json({
-            success: false,
-            message: "Bạn không có quyền xem danh sách thành viên",
-          });
-        }
-        
       }
 
       const members = await BoardMember.find({ boardId });
-      const memberIds = members.map((m) => m.userId);
-      const memberUsers = await User.find({ id: memberIds });
 
-      const memberList = memberUsers.map((user) => ({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      }));
+      // Gộp owner + member IDs, dedupe bằng Set
+      const allUserIds = new Set([String(board.userId)]);
+      for (const m of members) allUserIds.add(String(m.userId));
 
-      // Thêm owner vào đầu danh sách
-      const owner = await User.findOne({ id: board.userId });
-      if (owner) {
-        memberList.unshift({
-          id: owner.id,
-          name: owner.name,
-          email: owner.email,
+      // ✅ BỎ .select()
+      const users = await User.find({
+        id: [...allUserIds],
+        isDeleted: false,
+      });
+      const userMap = new Map(users.map((u) => [String(u.id), u]));
+
+      // Owner luôn đứng đầu
+      const result = [];
+      const ownerUser = userMap.get(String(board.userId));
+      if (ownerUser) {
+        result.push({
+          id: ownerUser.id,
+          name: ownerUser.name,
+          email: ownerUser.email,
+          role: "owner",
         });
       }
 
-      // Lọc bỏ trùng lặp (nếu owner vô tình có trong memberList)
-      const uniqueMemberList = memberList.filter(
-        (member, index, self) => index === self.findIndex(m => String(m.id) === String(member.id))
-      );
+      for (const m of members) {
+        const u = userMap.get(String(m.userId));
+        if (u && String(u.id) !== String(board.userId)) {
+          result.push({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: m.role,
+          });
+        }
+      }
 
       return res.status(200).json({
         success: true,
-        data: uniqueMemberList,
+        data: result,
+        total: result.length,
       });
     } catch (err) {
       console.error("Get assignable members error:", err);

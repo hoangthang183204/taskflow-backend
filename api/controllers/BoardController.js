@@ -1,27 +1,27 @@
 module.exports = {
   getMyBoards: async (req, res) => {
     try {
-      // Boards do user tạo
-      const myBoards = await Board.find({ userId: req.user.id });
+      const page = Math.max(parseInt(req.query.page) || 1, 1);
+      const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+      const skip = (page - 1) * limit;
 
-      // Boards user được mời vào (loại trừ board đã tạo)
-      const boardMembers = await BoardMember.find({ userId: req.user.id });
+      const [myBoards, boardMembers] = await Promise.all([
+        Board.find({ userId: req.user.id }).skip(skip).limit(limit),
+        BoardMember.find({ userId: req.user.id }),
+      ]);
+
       const invitedBoardIds = boardMembers.map((m) => m.boardId);
-
       const myBoardIds = myBoards.map((b) => b.id);
       const uniqueInvitedIds = invitedBoardIds.filter(
         (id) => !myBoardIds.includes(id),
       );
 
-      const invitedBoards = await Board.find({ id: uniqueInvitedIds });
+      const invitedBoards = uniqueInvitedIds.length
+        ? await Board.find({ id: uniqueInvitedIds }).limit(limit)
+        : [];
 
-      // Gộp và đánh dấu role
       const allBoards = [
-        ...myBoards.map((b) => ({
-          ...b,
-          role: "owner",
-          type: "personal",
-        })),
+        ...myBoards.map((b) => ({ ...b, role: "owner", type: "personal" })),
         ...invitedBoards.map((b) => ({
           ...b,
           role: boardMembers.find((m) => m.boardId === b.id)?.role || "member",
@@ -29,7 +29,15 @@ module.exports = {
         })),
       ];
 
-      return res.status(200).json({ success: true, data: allBoards });
+      return res.status(200).json({
+        success: true,
+        data: allBoards,
+        pagination: {
+          page,
+          limit,
+          total: myBoards.length + invitedBoards.length,
+        },
+      });
     } catch (err) {
       console.error("getMyBoards error:", err);
       return res.status(500).json({ success: false, message: err.message });
@@ -132,6 +140,64 @@ module.exports = {
 
       return res.status(200).json({ success: true, message: "Đã xóa board" });
     } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+
+  // api/controllers/BoardController.js
+  subscribe: async function (req, res) {
+    try {
+      const { boardId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Chưa đăng nhập" });
+      }
+
+      const { allowed } = await PermissionService.canAccessBoard(
+        userId,
+        boardId,
+      );
+      if (!allowed) {
+        return res
+          .status(403)
+          .json({ success: false, message: "Không có quyền" });
+      }
+
+      // ✅ Lấy tất cả sockets qua Engine.IO (Map)
+      const allSockets = sails.io?.sockets?.sockets; // ← object Map
+
+      let joinedCount = 0;
+
+      if (allSockets) {
+        // allSockets là Map: socketId → socket.io socket
+        for (const [socketId, socket] of allSockets.entries()) {
+          // Lấy userId đã lưu từ beforeConnect
+          // Socket.IO v4: thông tin nằm trong socket.handshake hoặc socket.data
+          const handshakeUserId =
+            socket.handshake?.userId ||
+            socket.handshake?.auth?.userId ||
+            socket.data?.userId;
+
+          if (handshakeUserId === userId) {
+            sails.sockets.join(socket, `board:${boardId}`);
+            joinedCount++;
+            sails.log.info(`✅ Socket ${socketId} joined board:${boardId}`);
+          }
+        }
+      } else {
+        sails.log.warn("⚠️ sails.io.sockets.sockets không tồn tại");
+      }
+
+      return res.json({
+        success: true,
+        room: `board:${boardId}`,
+        joinedCount,
+      });
+    } catch (err) {
+      sails.log.error("subscribe error:", err);
       return res.status(500).json({ success: false, message: err.message });
     }
   },
