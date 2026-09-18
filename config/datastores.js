@@ -13,10 +13,19 @@
  * https://sailsjs.com/config/datastores
  */
 
+// module.exports.datastores = {
+//   default: {
+//     adapter: require('sails-postgresql'),
+//     url: process.env.DATABASE_URL,
+//   },
+// };
+
 module.exports.datastores = {
   default: {
-    adapter: require('sails-postgresql'),
-    url: process.env.DATABASE_URL,
+    adapter: "sails-mongo",
+    // Ưu tiên đọc biến môi trường, nếu không có thì dùng giá trị mặc định
+    url: process.env.DATABASE_URL || "mongodb://mongodb:27017/task_manager",
+    database: "task_manager",
   },
 };
 

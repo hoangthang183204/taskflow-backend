@@ -1,3 +1,4 @@
+// api/controllers/AuthController.js
 const AuthService = require("../services/AuthService");
 const response = require("../utils/response");
 const authValidator = require("../validators/authValidator");
@@ -23,7 +24,7 @@ module.exports = {
             return response.badRequest(
               res,
               validation.errors[0],
-              "VALIDATION_ERROR",
+              "VALIDATION_ERROR"
             );
         }
       }
@@ -56,7 +57,7 @@ module.exports = {
             return response.badRequest(
               res,
               validation.errors[0],
-              "VALIDATION_ERROR",
+              "VALIDATION_ERROR"
             );
         }
       }
@@ -69,19 +70,19 @@ module.exports = {
           return response.badRequest(
             res,
             "Email không tồn tại trong hệ thống.",
-            "USER_NOT_FOUND",
+            "USER_NOT_FOUND"
           );
         case "INVALID_PASSWORD":
           return response.badRequest(
             res,
             "Mật khẩu không chính xác.",
-            "INVALID_PASSWORD",
+            "INVALID_PASSWORD"
           );
         case "ACCOUNT_DELETED":
           return response.badRequest(
             res,
             "Tài khoản đã bị xóa. Vui lòng liên hệ hỗ trợ.",
-            "ACCOUNT_DELETED",
+            "ACCOUNT_DELETED"
           );
         default:
           console.error("Login error:", err);
@@ -103,7 +104,7 @@ module.exports = {
         return response.notFound(
           res,
           "Không tìm thấy người dùng.",
-          "USER_NOT_FOUND",
+          "USER_NOT_FOUND"
         );
       }
       console.error("GetMe error:", err);
@@ -133,7 +134,7 @@ module.exports = {
             return response.badRequest(
               res,
               validation.errors[0],
-              "VALIDATION_ERROR",
+              "VALIDATION_ERROR"
             );
         }
       }
@@ -146,7 +147,7 @@ module.exports = {
           return response.notFound(
             res,
             "Không tìm thấy người dùng.",
-            "USER_NOT_FOUND",
+            "USER_NOT_FOUND"
           );
         case "EMAIL_EXISTS":
           return response.badRequest(res, "Email đã tồn tại.", "EMAIL_EXISTS");
@@ -178,7 +179,7 @@ module.exports = {
             return response.badRequest(
               res,
               validation.errors[0],
-              "VALIDATION_ERROR",
+              "VALIDATION_ERROR"
             );
         }
       }
@@ -186,7 +187,7 @@ module.exports = {
       await AuthService.changePassword(
         req.user.id,
         req.body.oldPassword,
-        req.body.newPassword,
+        req.body.newPassword
       );
 
       return response.success(res, null, "Đổi mật khẩu thành công.");
@@ -196,13 +197,13 @@ module.exports = {
           return response.notFound(
             res,
             "Không tìm thấy người dùng.",
-            "USER_NOT_FOUND",
+            "USER_NOT_FOUND"
           );
         case "INVALID_OLD_PASSWORD":
           return response.badRequest(
             res,
             "Mật khẩu cũ không chính xác.",
-            "INVALID_OLD_PASSWORD",
+            "INVALID_OLD_PASSWORD"
           );
         default:
           console.error("Change password error:", err);
@@ -225,7 +226,7 @@ module.exports = {
         return response.notFound(
           res,
           "Không tìm thấy người dùng.",
-          "USER_NOT_FOUND",
+          "USER_NOT_FOUND"
         );
       }
       return response.serverError(res, "Lỗi server, vui lòng thử lại sau.");

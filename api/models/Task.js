@@ -94,7 +94,7 @@ module.exports = {
 
   beforeCreate: async function (values, proceed) {
     if (values.status === "doing") {
-      const now = Date.now(); // Dùng số thay vì ISO string
+      const now = Date.now();
       values.startDate = now;
       values.actualStartDate = now;
     }
@@ -102,20 +102,24 @@ module.exports = {
   },
 
   beforeUpdate: async function (values, proceed) {
-    const now = Date.now(); // Dùng số
+    const now = Date.now();
 
-    if (values.status === "doing" && !values.actualStartDate) {
-      values.actualStartDate = now;
-    }
+    // ✅ CHỈ xử lý logic khi `status` thực sự thay đổi
+    // Khi archive/xóa task, `values.status` là undefined → skip
+    if (values.status !== undefined) {
+      if (values.status === "doing" && !values.actualStartDate) {
+        values.actualStartDate = now;
+      }
 
-    if (values.status === "done" && !values.actualEndDate) {
-      values.actualEndDate = now;
+      if (values.status === "done" && !values.actualEndDate) {
+        values.actualEndDate = now;
 
-      if (values.actualStartDate) {
-        const start = values.actualStartDate;
-        const end = now;
-        const hours = (end - start) / (1000 * 60 * 60);
-        values.actualHours = Math.round(hours * 10) / 10;
+        if (values.actualStartDate) {
+          const start = values.actualStartDate;
+          const end = now;
+          const hours = (end - start) / (1000 * 60 * 60);
+          values.actualHours = Math.round(hours * 10) / 10;
+        }
       }
     }
 

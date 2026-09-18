@@ -11,8 +11,16 @@
 module.exports.routes = {
   "/": { view: "pages/homepage" },
 
-  "POST /api/auth/register": "AuthController.register",
-  "POST /api/auth/login": "AuthController.login",
+  "POST /api/auth/login": {
+    controller: "AuthController",
+    action: "login",
+    policy: "authRateLimit",
+  },
+  "POST /api/auth/register": {
+    controller: "AuthController",
+    action: "register",
+    policy: "authRateLimit",
+  },
 
   "GET /api/auth/me": "AuthController.getMe",
   "PUT /api/auth/profile": "AuthController.updateProfile",
@@ -38,6 +46,7 @@ module.exports.routes = {
     controller: "TaskController",
     action: "find",
     policies: ["isAuthenticated"],
+    policy: "rateLimit",
   },
 
   "PUT /api/task/:id": {
@@ -54,12 +63,14 @@ module.exports.routes = {
 
   "PUT /api/task/:id/assign": "TaskController.assign",
 
-
   "GET /api/board": "BoardController.getMyBoards",
   "POST /api/board": "BoardController.create",
   "GET /api/board/:id": "BoardController.getBoardDetail",
   "PUT /api/board/:id": "BoardController.update",
   "DELETE /api/board/:id": "BoardController.delete",
+
+  "GET /api/board/:boardId/subscribe": "BoardController.subscribe",
+  // "POST /api/board/:boardId/subscribe": "BoardController.subscribe",
 
   "GET /api/board/:boardId/members": "BoardMemberController.getMembers",
   "POST /api/board/:boardId/members": "BoardMemberController.addMember",
@@ -67,4 +78,6 @@ module.exports.routes = {
     "BoardMemberController.removeMember",
   "GET /api/board/:boardId/members/assignable":
     "BoardMemberController.getAssignableMembers",
+
+  "GET /api/test-reminder": "TaskController.testReminder",
 };
