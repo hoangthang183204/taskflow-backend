@@ -1,3 +1,4 @@
+// api/services/TaskService.js
 const sanitize = require("../utils/sanitize");
 const createError = require("../utils/error");
 const TaskValidator = require("../validators/taskValidator");
@@ -33,12 +34,14 @@ module.exports = {
   },
 
   getTasks: async (user, query) => {
-    const MAX_LIMIT = 100;
-    const DEFAULT_LIMIT = 10;
+    // ✅ FIX: MAX_LIMIT nâng lên 500, DEFAULT_LIMIT = 100
+    // Trước đây: Math.min(limit, DEFAULT_LIMIT=10, MAX_LIMIT=100) → luôn cap ở 10
+    // Bây giờ:   Math.min(limit, MAX_LIMIT=500) → tôn trọng limit client gửi
+    const MAX_LIMIT = 500;
+    const DEFAULT_LIMIT = 100;
     const page = Math.max(parseInt(query.page) || 1, 1);
     const limit = Math.min(
       parseInt(query.limit) || DEFAULT_LIMIT,
-      DEFAULT_LIMIT,
       MAX_LIMIT,
     );
     const skip = (page - 1) * limit;
@@ -195,11 +198,15 @@ module.exports = {
       throw createError("USER_NOT_FOUND", "Không tìm thấy người dùng", 404);
     }
 
-    const updatedTask = await Task.updateOne({ id: taskId }).set({
+    // ✅ FIX: updateOne().set() trong Sails/Waterline trả về record CŨ
+    // Phải fetch lại để có data mới → broadcast WS đúng
+    await Task.updateOne({ id: taskId }).set({
       assignedTo: assignedTo,
       assignedByName: assignedUser.name,
       assignedAt: Date.now(),
     });
+
+    const updatedTask = await Task.findOne({ id: taskId });
 
     console.log(
       `✅ Gán task thành công: task=${taskId}, assignedTo=${assignedTo}, by=${user.id}`,
@@ -291,7 +298,9 @@ module.exports = {
       updateData.assignedAt = Date.now();
     }
 
-    const updatedTask = await Task.updateOne({ id }).set(updateData);
+    // ✅ FIX: fetch lại sau update để có data mới
+    await Task.updateOne({ id }).set(updateData);
+    const updatedTask = await Task.findOne({ id });
     return updatedTask;
   },
 
@@ -458,9 +467,14 @@ module.exports = {
 
   // ✅ Thùng rác CHUNG — user thấy task của board mình xóa
   getTrashTasks: async (user, query) => {
-    const MAX_LIMIT = 100;
+    // ✅ FIX tương tự: nâng MAX, bỏ DEFAULT ra khỏi Math.min
+    const MAX_LIMIT = 500;
+    const DEFAULT_LIMIT = 50;
     const page = Math.max(parseInt(query.page) || 1, 1);
-    const limit = Math.min(parseInt(query.limit) || 10, MAX_LIMIT);
+    const limit = Math.min(
+      parseInt(query.limit) || DEFAULT_LIMIT,
+      MAX_LIMIT,
+    );
     const skip = (page - 1) * limit;
 
     // ✅ Lấy tất cả board IDs user có quyền
